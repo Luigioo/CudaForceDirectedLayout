@@ -4,3 +4,7 @@
 *.ptx
 *.cubin
 *.fatbin
+/.vs/CudaRuntime2
+/x64/Debug
+*.vcxproj
+*.user
