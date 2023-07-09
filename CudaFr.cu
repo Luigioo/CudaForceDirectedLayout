@@ -21,6 +21,9 @@
 #include "CudaFr.cuh"
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+
+using namespace std;
+
 inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort = true)
 {
     if (code != cudaSuccess)
@@ -36,8 +39,8 @@ __global__ void calculateRepulsiveForces(const double* positions,
     double* repulsiveForces, const double k,
     const int numNodes) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
-
     if (i < numNodes) {
+       
         double repulsiveForceX = 0.0;
         double repulsiveForceY = 0.0;
 
@@ -54,17 +57,46 @@ __global__ void calculateRepulsiveForces(const double* positions,
             repulsiveForceY += repulsiveForce * (deltaY / distance);
 
             // Print intermediate values
-            if (i == 2)
+            /*if (i == 13)
                 printf("i = %d, j = %d, deltaX = %.16f, deltaY = %.16f, distance = %.16f, rf = %.16f, rx=%.16f, ry = %.16f\n", i, j, deltaX, deltaY, distance, repulsiveForce, repulsiveForceX, repulsiveForceY);
+        */
         }
 
         repulsiveForces[i * 2] = repulsiveForceX;
         repulsiveForces[i * 2 + 1] = repulsiveForceY;
 
         // Print final repulsive forces
-        if (i == 2)
-            printf("i = %d, repulsiveForceX = %.16f, repulsiveForceY = %.16f\n", i, repulsiveForces[i * 2], repulsiveForceY);
+        //if (i == 2)
+            //printf("i = %d, repulsiveForceX = %.16f, repulsiveForceY = %.16f\n", i, repulsiveForces[i * 2], repulsiveForceY);
     }
+}
+
+__global__ void calculateAttractiveForcesSingleThread(int* edges, int numEdges, const double* positions,
+    double* attractiveForces, const double k,
+    const int numNodes) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if(i==1)
+        for (int i = 0; i < numEdges; ++i) {
+            int node1 = edges[i * 2];
+            int node2 = edges[i * 2 + 1];
+
+            double attractiveForceX = 0.0;
+            double attractiveForceY = 0.0;
+
+            double deltaX = positions[node1 * 2] - positions[node2 * 2];
+            double deltaY = positions[node1 * 2 + 1] - positions[node2 * 2 + 1];
+            double distance = max(0.01, sqrt(deltaX * deltaX + deltaY * deltaY));
+            double attractiveForce = distance * distance / k;
+
+            attractiveForceX = attractiveForce * (deltaX / distance);
+            attractiveForceY = attractiveForce * (deltaY / distance);
+
+            attractiveForces[node1 * 2] -= attractiveForceX;
+            attractiveForces[node1 * 2 + 1] -= attractiveForceY;
+            attractiveForces[node2 * 2] += attractiveForceX;
+            attractiveForces[node2 * 2 + 1] += attractiveForceY;
+        }
 }
 
 // CUDA kernel for calculating attractive forces
@@ -82,7 +114,7 @@ __global__ void calculateAttractiveForces(int* edges, int numEdges, const double
 
         double deltaX = positions[node1 * 2] - positions[node2 * 2];
         double deltaY = positions[node1 * 2 + 1] - positions[node2 * 2 + 1];
-        double distance = fmax(0.01, sqrt(deltaX * deltaX + deltaY * deltaY));
+        double distance = max(0.01, sqrt(deltaX * deltaX + deltaY * deltaY));
         double attractiveForce = distance * distance / k;
 
         attractiveForceX = attractiveForce * (deltaX / distance);
@@ -103,33 +135,50 @@ __global__ void applyForces(double* positions,
 
     int i = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (i < numNodes) {
-        double netForceX = attractiveForces[i * 2] + repulsiveForces[i * 2];
-        double netForceY = attractiveForces[i * 2 + 1] + repulsiveForces[i * 2 + 1];
+    if (i == 1) {
 
-        double distance = fmax(0.01, sqrt(netForceX * netForceX + netForceY * netForceY));
-        double displacementX = fmin(distance, temp) * netForceX / distance;
-        double displacementY = fmin(distance, temp) * netForceY / distance;
+        for (int i = 0; i < numNodes; ++i) {
+            double netForceX = attractiveForces[i * 2] + repulsiveForces[i * 2];
+            double netForceY = attractiveForces[i * 2 + 1] + repulsiveForces[i * 2 + 1];
 
-        positions[i * 2] += displacementX;
-        positions[i * 2 + 1] += displacementY;
+            double distance = max(0.01, sqrt(netForceX * netForceX + netForceY * netForceY));
+            double displacementX = min(distance, temp) * netForceX / distance;
+            double displacementY = min(distance, temp) * netForceY / distance;
 
-        // Ensure node stays within bounding box
-        positions[i * 2] = fmax(0.01, fmin(positions[i * 2], 1.0));
-        positions[i * 2 + 1] = fmax(0.01, fmin(positions[i * 2 + 1], 1.0));
+            positions[i * 2] += displacementX;
+            positions[i * 2 + 1] += displacementY;
+
+            // Ensure node stays within bounding box
+            positions[i * 2] = max(0.01, min(positions[i * 2], 1.0));
+            positions[i * 2 + 1] = max(0.01, min(positions[i * 2 + 1], 1.0));
+        }
+
+        //double netForceX = attractiveForces[i * 2] + repulsiveForces[i * 2];
+        //double netForceY = attractiveForces[i * 2 + 1] + repulsiveForces[i * 2 + 1];
+
+        //double distance = fmax(0.01, sqrt(netForceX * netForceX + netForceY * netForceY));
+        //double displacementX = fmin(distance, temp) * netForceX / distance;
+        //double displacementY = fmin(distance, temp) * netForceY / distance;
+
+        //positions[i * 2] += displacementX;
+        //positions[i * 2 + 1] += displacementY;
+
+        //// Ensure node stays within bounding box
+        //positions[i * 2] = fmax(0.01, fmin(positions[i * 2], 1.0));
+        //positions[i * 2 + 1] = fmax(0.01, fmin(positions[i * 2 + 1], 1.0));
 
     }
 }
 
 //Takes in edges data in the form:
-// [v1, v2, v1, v3...v45, v48]
-// where v1 is connected to v2, v1 is conneted to v3, and v45 is connected to v48
-// Returns a double array of calculated positions of the vetices
-// [x1, y1, x2, y2, .... , xn, yn]
-// where x1 is the x position for vertex 1
+    // [v1, v2, v1, v3...v45, v48]
+    // where v1 is connected to v2, v1 is conneted to v3, and v45 is connected to v48
+    // Returns a double array of calculated positions of the vetices
+    // [x1, y1, x2, y2, .... , xn, yn]
+    // where x1 is the x position for vertex 1
 double* fruchterman_reingold_layout_cuda(
-    int* edges, int numEdges, int numNodes, int iterations = 50,
-    double k = 0.0, double temp = 1.0, double cooling_factor = 0.95, int seed = 42) {
+    int* edges, int numEdges, int numNodes, int iterations,
+    double k, double temp, double cooling_factor, int seed) {
 
     std::random_device rd;
     std::mt19937 gen(seed != 0 ? seed : rd());
@@ -172,15 +221,18 @@ double* fruchterman_reingold_layout_cuda(
 
     for (int iter = 0; iter < iterations; ++iter) {
         // Compute repulsive forces
-        calculateRepulsiveForces << <gridSize, blockSize >> > (d_positions, d_repulsiveForces, k, numNodes);
+        calculateRepulsiveForces<<<gridSize,blockSize>>>(d_positions, d_repulsiveForces, k, numNodes);
+        gpuErrchk(cudaGetLastError());
         gpuErrchk(cudaDeviceSynchronize());
         // Compute attractive forces
-        calculateAttractiveForces << <gridSize, blockSize >> > (d_edges, numEdges, d_positions, d_attractiveForces, k, numNodes);
-        gpuErrchk(cudaDeviceSynchronize());
-        applyForces << <gridSize, blockSize >> > (d_positions, d_attractiveForces, d_repulsiveForces, numNodes, temp);
+        calculateAttractiveForcesSingleThread<<<gridSize,blockSize>>>(d_edges, numEdges, d_positions, d_attractiveForces, k, numNodes);
+        gpuErrchk(cudaGetLastError());
+
         gpuErrchk(cudaDeviceSynchronize());
 
-
+        applyForces<<<gridSize,blockSize>>>(d_positions, d_attractiveForces, d_repulsiveForces, numNodes, temp);
+        gpuErrchk(cudaGetLastError());
+        gpuErrchk(cudaDeviceSynchronize());
 
         temp *= cooling_factor;
 
@@ -191,24 +243,29 @@ double* fruchterman_reingold_layout_cuda(
         auto sumRepulsive = thrust::device_pointer_cast(d_repulsiveForces);
         auto sumAttractive = thrust::device_pointer_cast(d_attractiveForces);
 
+        //std::cout << std::setprecision(std::numeric_limits<double>::digits10 + 1); // Set precision to maximum
+        //cout << "repulsive: " << endl;
+        //for (int i = 0; i < numNodes*2; i++) {
+        //    std::cout << sumRepulsive[i] << " ";
+        //    if (i != 0 && i % 9 == 0) cout << endl;
+        //}
+        //cout << "attracgtive: " << endl;
+        //for (int i = 0; i < numNodes * 2; i++) {
+        //    std::cout << sumAttractive[i] << " ";
+        //    if (i != 0 && i % 9 == 0) cout << endl;
+        //}
 
-        for (int i = 0; i < numNodes * 2; ++i) {
-            sumRepulsiveForces += std::abs(sumRepulsive[i]);
-            sumAttractiveForces += std::abs(sumAttractive[i]);
-        }
+        ////std::cout << "repo2x: " << sumRepulsive[4] << std::endl;
 
-        std::cout << std::setprecision(std::numeric_limits<double>::digits10 + 1); // Set precision to maximum
-        std::cout << "repo2x: " << sumRepulsive[4] << std::endl;
+        //std::cout << "repulsive forces: " << sumRepulsiveForces << std::endl;
+        //std::cout << "Sum of absolute values of attractive forces: " << sumAttractiveForces << std::endl;
 
-        std::cout << "repulsive forces: " << sumRepulsiveForces << std::endl;
-        std::cout << "Sum of absolute values of attractive forces: " << sumAttractiveForces << std::endl;
-
-        if (iter == 0) {
-            for (int i = 0; i < 10; i++) {
-                std::cout << sumRepulsive[i] << " ";
-            }
-            std::cout << std::endl;
-        }
+        //if (iter == 0) {
+        //    for (int i = 0; i < 10; i++) {
+        //        std::cout << sumRepulsive[i] << " ";
+        //    }
+        //    std::cout << std::endl;
+        //}
 
         //reset attractive and repulsive forces
         gpuErrchk(cudaMemset(d_attractiveForces, 0, numNodes * 2 * sizeof(double)));

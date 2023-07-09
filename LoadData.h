@@ -8,4 +8,7 @@
 class LoadData {
 public:
     static double* readFileAndConvert(const std::string& filename, int& size);
+    static int* readFileAndConvertInt(const std::string& filename, int& size);
+    static void writeFileWithPrecision(const std::string& filename, double* data, int size);
+
 };
