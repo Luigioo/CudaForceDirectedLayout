@@ -11,25 +11,56 @@
 
 using namespace std;
 
+template <typename T>
+bool areArraysEqual(const T arr1[], const T arr2[], int size) {
+
+	for (int i = 0; i < size; i++)
+		if (arr1[i] != arr2[i]) return false;
+
+	return true;
+}
+
 int main() {
-	int numEdges = 0;
-    int* arr = LoadData::readFileAndConvertInt("random_50.txt", numEdges);
-	numEdges /= 2;
-	int numNodes = 50;
+
+	int arrsize;
+	int numEdges;
+	int numNodes;
+	int* arr = LoadData::readFileAndConvertInt("./graph_data/random.txt", arrsize, numNodes);
+	numEdges = arrsize / 2;
+
+	if (arr != nullptr) {
+		std::cout << "Number of Nodes: " << numNodes << std::endl;
+		std::cout << "Number of Edges: " << numEdges << std::endl;
+		/*std::cout << "Array Data:" << std::endl;
+		for (int i = 0; i < arrsize; i++) {
+			std::cout << arr[i] << " ";
+		}
+		std::cout << std::endl;*/
+
+	}
+
+
+
+	//return 0;
+
+
+	//int numNodes = 50;
 	const int iterations = 50;
 
 	cout << "start CUDA" << endl;
 
     double* positions = fruchterman_reingold_layout_cuda(arr, numEdges, numNodes, iterations);
 
-	LoadData::writeFileWithPrecision("fr_CUDA.txt", positions, numNodes * 2);
+	LoadData::writeFileWithPrecision("./position_data/fr_CUDA.txt", positions, numNodes * 2);
 
 	cout << "CPU Start" << endl;
 
 	double* cpuPos = CpuFr::fruchterman_reingold_layout_cpu(arr, numEdges, numNodes, iterations);
 
-	LoadData::writeFileWithPrecision("fr_CPU.txt", cpuPos, numNodes * 2);
+	LoadData::writeFileWithPrecision("./position_data/fr_CPU.txt", cpuPos, numNodes * 2);
 
+
+	cout << "positions are equal? : " << areArraysEqual<double>(positions, cpuPos, numNodes * 2) << endl;
 
 
 	delete[] arr;

@@ -33,28 +33,47 @@ double* LoadData::readFileAndConvert(const std::string& filename, int& size) {
     return arr;
 }
 
-int* LoadData::readFileAndConvertInt(const std::string& filename, int& size) {
+int* LoadData::readFileAndConvertInt(const std::string& filename, int& size, int& numNodes) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         std::cout << "File not found!" << std::endl;
         return nullptr;
     }
 
-    std::vector<int> data;
-    int num;
-    while (file >> num) {
-        data.push_back(num);
+    std::string line;
+    // Read the first line containing the array data
+    if (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::vector<int> data;
+        int num;
+        while (ss >> num) {
+            data.push_back(num);
+        }
+
+        size = data.size();
+        int* arr = new int[size];
+        for (int i = 0; i < size; i++) {
+            arr[i] = data[i];
+        }
+
+        // Read the second line containing the number of nodes
+        if (std::getline(file, line)) {
+            std::stringstream ss2(line);
+            if (ss2 >> numNodes) {
+                return arr;
+            }
+        }
+
+        // Error occurred while reading the number of nodes
+        delete[] arr;
+        std::cout << "Failed to read the number of nodes." << std::endl;
+        return nullptr;
     }
 
-    size = data.size();
-    int* arr = new int[size];
-    for (int i = 0; i < size; i++) {
-        arr[i] = data[i];
-    }
-
-    return arr;
+    // Error occurred while reading the array data
+    std::cout << "Failed to read the array data." << std::endl;
+    return nullptr;
 }
-
 
 void LoadData::writeFileWithPrecision(const std::string& filename, double* data, int size) {
     std::ofstream file(filename);
