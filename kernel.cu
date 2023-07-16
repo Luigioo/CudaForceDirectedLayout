@@ -3,6 +3,10 @@
 #include "device_launch_parameters.h"
 
 #include <stdio.h>
+#include <chrono>
+#include <iostream>
+#include <iomanip>
+
 
 #include "CudaFr.cuh"
 #include "LoadData.h"
@@ -21,178 +25,61 @@ bool areArraysEqual(const T arr1[], const T arr2[], int size) {
 	return true;
 }
 
+std::string recordTime() {
+	static std::chrono::time_point<std::chrono::system_clock> lastTime = std::chrono::system_clock::now();
+	std::chrono::time_point<std::chrono::system_clock> currentTime = std::chrono::system_clock::now();
+	std::chrono::duration<double, std::milli> elapsed_milliseconds = currentTime - lastTime;
+	lastTime = currentTime;
+
+	std::ostringstream stream;
+	stream << std::fixed << std::setprecision(3) << elapsed_milliseconds.count();
+
+	std::string elapsedStr = stream.str();
+	size_t decimalPos = elapsedStr.find('.');
+	if (decimalPos != std::string::npos) {
+		elapsedStr.resize(decimalPos + 4); // Keep up to 3 decimal places
+	}
+
+	return elapsedStr + " ms";
+}
+
 int main(int argc, char* argv[]) {
-
-	Config config(argc, argv);
-
+	recordTime();
+	Config cfg;
+	cfg.ParseArgs(argc, argv);
+	cout<<"Input Path: "<<cfg.input_path<<endl;
 
 	int arrsize;
 	int numEdges;
 	int numNodes;
-	int* arr = LoadData::readFileAndConvertInt("./graph_data/grid.txt", arrsize, numNodes);
+	auto currentTime = std::chrono::system_clock::now();
+	int* arr = LoadData::readFileAndConvertInt(cfg.input_path, arrsize, numNodes);
 	numEdges = arrsize / 2;
+	cout << "Reading file took " << recordTime() << endl;
 
 	if (arr != nullptr) {
-		std::cout << "Number of Nodes: " << numNodes << std::endl;
-		std::cout << "Number of Edges: " << numEdges << std::endl;
-		/*std::cout << "Array Data:" << std::endl;
-		for (int i = 0; i < arrsize; i++) {
-			std::cout << arr[i] << " ";
-		}
-		std::cout << std::endl;*/
-
+		cout << "Number of Nodes: " << numNodes << endl;
+		cout << "Number of Edges: " << numEdges << endl;
 	}
 
-
-
-	//return 0;
-
-
-	//int numNodes = 50;
-	const int iterations = 50;
-
-	cout << "start CUDA" << endl;
-
-    double* positions = fruchterman_reingold_layout_cuda(arr, numEdges, numNodes, iterations);
-
-	LoadData::writeFileWithPrecision("./position_data/fr_CUDA.txt", positions, numNodes * 2);
-
-	cout << "CPU Start" << endl;
-
-	double* cpuPos = CpuFr::fruchterman_reingold_layout_cpu(arr, numEdges, numNodes, iterations);
-
-	LoadData::writeFileWithPrecision("./position_data/fr_CPU.txt", cpuPos, numNodes * 2);
-
-
-	cout << "positions are equal? : " << areArraysEqual<double>(positions, cpuPos, numNodes * 2) << endl;
-
+	if (cfg.processor == 0) {
+		cout << "Running CUDA algorithm" << endl;
+		recordTime();
+		double* positions = fruchterman_reingold_layout_cuda(arr, numEdges, numNodes, cfg.iteration);
+		cout<<"CUDA took "<<recordTime()<<endl;
+		LoadData::writeFileWithPrecision(cfg.output_path, positions, numNodes * 2);
+		delete[] positions;
+	}
+	else if (cfg.processor == 1) {
+		cout << "Running CPU algorithm" << endl;
+		double* cpuPos = CpuFr::fruchterman_reingold_layout_cpu(arr, numEdges, numNodes, cfg.iteration);
+		LoadData::writeFileWithPrecision(cfg.output_path, cpuPos, numNodes * 2);
+		delete[] cpuPos;
+	}
 
 	delete[] arr;
-	delete[] positions;
-	delete[] cpuPos;
+
+
 }
 
-//cudaError_t addWithCuda(int *c, const int *a, const int *b, unsigned int size);
-//
-//__global__ void addKernel(int *c, const int *a, const int *b)
-//{
-//    int i = threadIdx.x;
-//    c[i] = a[i] + b[i];
-//    atomicAdd(&c[i], 1);
-//}
-//
-//int main()
-//{
-//    const int arraySize = 5;
-//    const int a[arraySize] = { 1, 2, 3, 4, 5 };
-//    const int b[arraySize] = { 10, 20, 30, 40, 50 };
-//    int c[arraySize] = { 0 };
-//
-//    // Add vectors in parallel.
-//    cudaError_t cudaStatus = addWithCuda(c, a, b, arraySize);
-//    if (cudaStatus != cudaSuccess) {
-//        fprintf(stderr, "addWithCuda failed!");
-//        return 1;
-//    }
-//
-//    printf("{1,2,3,4,5} + {10,20,30,40,50} = {%d,%d,%d,%d,%d}\n",
-//        c[0], c[1], c[2], c[3], c[4]);
-//
-//    int size = 0;
-//    double* arr = LoadData::readFileAndConvert("array_data.txt", size);
-//
-//    for (int i = 0; i < size; ++i) {
-//        std::cout << arr[i] << " ";
-//    }
-//    delete[] arr; // Don't forget to delete!
-//
-//    // cudaDeviceReset must be called before exiting in order for profiling and
-//    // tracing tools such as Nsight and Visual Profiler to show complete traces.
-//    cudaStatus = cudaDeviceReset();
-//    if (cudaStatus != cudaSuccess) {
-//        fprintf(stderr, "cudaDeviceReset failed!");
-//        return 1;
-//    }
-//
-//    return 0;
-//}
-//
-//// Helper function for using CUDA to add vectors in parallel.
-//cudaError_t addWithCuda(int *c, const int *a, const int *b, unsigned int size)
-//{
-//    int *dev_a = 0;
-//    int *dev_b = 0;
-//    int *dev_c = 0;
-//    cudaError_t cudaStatus;
-//
-//    // Choose which GPU to run on, change this on a multi-GPU system.
-//    cudaStatus = cudaSetDevice(0);
-//    if (cudaStatus != cudaSuccess) {
-//        fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
-//        goto Error;
-//    }
-//
-//    // Allocate GPU buffers for three vectors (two input, one output)    .
-//    cudaStatus = cudaMalloc((void**)&dev_c, size * sizeof(int));
-//    if (cudaStatus != cudaSuccess) {
-//        fprintf(stderr, "cudaMalloc failed!");
-//        goto Error;
-//    }
-//
-//    cudaStatus = cudaMalloc((void**)&dev_a, size * sizeof(int));
-//    if (cudaStatus != cudaSuccess) {
-//        fprintf(stderr, "cudaMalloc failed!");
-//        goto Error;
-//    }
-//
-//    cudaStatus = cudaMalloc((void**)&dev_b, size * sizeof(int));
-//    if (cudaStatus != cudaSuccess) {
-//        fprintf(stderr, "cudaMalloc failed!");
-//        goto Error;
-//    }
-//
-//    // Copy input vectors from host memory to GPU buffers.
-//    cudaStatus = cudaMemcpy(dev_a, a, size * sizeof(int), cudaMemcpyHostToDevice);
-//    if (cudaStatus != cudaSuccess) {
-//        fprintf(stderr, "cudaMemcpy failed!");
-//        goto Error;
-//    }
-//
-//    cudaStatus = cudaMemcpy(dev_b, b, size * sizeof(int), cudaMemcpyHostToDevice);
-//    if (cudaStatus != cudaSuccess) {
-//        fprintf(stderr, "cudaMemcpy failed!");
-//        goto Error;
-//    }
-//
-//    // Launch a kernel on the GPU with one thread for each element.
-//    addKernel<<<1, size>>>(dev_c, dev_a, dev_b);
-//
-//    // Check for any errors launching the kernel
-//    cudaStatus = cudaGetLastError();
-//    if (cudaStatus != cudaSuccess) {
-//        fprintf(stderr, "addKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-//        goto Error;
-//    }
-//    
-//    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-//    // any errors encountered during the launch.
-//    cudaStatus = cudaDeviceSynchronize();
-//    if (cudaStatus != cudaSuccess) {
-//        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching addKernel!\n", cudaStatus);
-//        goto Error;
-//    }
-//
-//    // Copy output vector from GPU buffer to host memory.
-//    cudaStatus = cudaMemcpy(c, dev_c, size * sizeof(int), cudaMemcpyDeviceToHost);
-//    if (cudaStatus != cudaSuccess) {
-//        fprintf(stderr, "cudaMemcpy failed!");
-//        goto Error;
-//    }
-//
-//Error:
-//    cudaFree(dev_c);
-//    cudaFree(dev_a);
-//    cudaFree(dev_b);
-//    
-//    return cudaStatus;
-//}
+

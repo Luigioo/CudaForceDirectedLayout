@@ -3,6 +3,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
 import time
+import math
 
 # Example usage:
     # arr = np.array([1.1234567891234567, 2.2345678912345678, 3.3456789123456789, 4.4567891234567890, 5.5678912345678901], dtype=np.float64)
@@ -54,18 +55,32 @@ def generate_grid_graph(rows, columns):
     
     return G
 
+def genLargeGrid(sideLength):
+    with open("graph_data/large_grid.txt", 'w') as f:  # Open the file in append mode
+        for r in range(sideLength-1):
+            for c in range(sideLength-1):
+                id = r*sideLength+c
+                f.write(str(id)+" "+str(id+1)+" "+str(id)+" "+str(id+sideLength)+" ")
+            id = r*sideLength+sideLength-1
+            f.write(str(id)+" "+str(id+sideLength)+" ")
+        rid = (sideLength-1)*sideLength
+        for c in range(sideLength-1):
+            id = rid+c
+            f.write(str(id)+" "+str(id+1)+" ")
+            
+        f.write("\n")  # Add a newline character at the end
+        f.write(str(sideLength*sideLength)+" \n")
+
 if __name__ == "__main__":
 
-    NUMNODES = 500
-    G = nx.gnp_random_graph(NUMNODES, 0.05, 42)
-    GraphToArray(G, "graph_data/random.txt")
+    # NUMNODES = 1<<10
+    # G = nx.gnp_random_graph(NUMNODES, 0.05, 42)
+    # GraphToArray(G, "graph_data/random.txt")
 
     # Generate the grid graph
-    m = 50  # Number of rows
-    n = 50  # Number of columns
-    G = nx.grid_2d_graph(m, n)
-    GraphToArray(G, "graph_data/grid.txt")
-
+    # G = nx.grid_2d_graph(math.isqrt(NUMNODES), math.isqrt(NUMNODES),)
+    # GraphToArray(G, "graph_data/grid.txt")
+    genLargeGrid(2<<6)
     # G_dict = {node: list(G.neighbors(node)) for node in G.nodes()}
     # edge_edge_array = np.array(list(G.edges)).flatten()
     # serialize_array(edge_edge_array, "random_50.txt")

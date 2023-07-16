@@ -1,10 +1,10 @@
 import subprocess
 
 
-def runProgram(program_path):
+def runProgram(argv):
 
     # Call the compiled C++ program
-    result = subprocess.run([program_path], capture_output=True, text=True)
+    result = subprocess.run(argv, capture_output=True, text=True)
 
     # Check the return code
     if result.returncode == 0:

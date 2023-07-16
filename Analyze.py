@@ -140,13 +140,13 @@ def do_edges_cross(p1, p2, p3, p4):
 
 if __name__ == "__main__":
 
-    arr = read_double_values("position_data/fr_CUDA.txt")
+    arr = read_double_values("position_data/outputCuda.txt")
     cuda_pos = group_elements(arr)
 
     arr = read_double_values("position_data/fr_CPU.txt")
     normal_pos = group_elements(arr)
 
-    G = ArrayToGraph('graph_data/random.txt')
+    G = ArrayToGraph('graph_data/large_grid.txt')
 
 
     if ENABLE_CROSSING_EDGES:
@@ -160,8 +160,8 @@ if __name__ == "__main__":
     ax1.set_title('Graph 1 (fr_cuda)\nTime: {:.4f} seconds'.format(1.1))
     nx.draw(G, pos=cuda_pos, ax=ax1)
 
-    ax2.set_title('Graph 2 (fr)\nTime: {:.4f} seconds'.format(1.1))
-    nx.draw(G, pos=normal_pos, ax=ax2)
+    # ax2.set_title('Graph 2 (fr)\nTime: {:.4f} seconds'.format(1.1))
+    # nx.draw(G, pos=normal_pos, ax=ax2)
 
     plt.tight_layout()
     plt.show()

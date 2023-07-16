@@ -63,18 +63,11 @@ __global__ void calculateRepulsiveForces(const double* positions,
             repulsiveForceX += repulsiveForce * (deltaX / distance);
             repulsiveForceY += repulsiveForce * (deltaY / distance);
 
-            // Print intermediate values
-            /*if (i == 13)
-                printf("i = %d, j = %d, deltaX = %.16f, deltaY = %.16f, distance = %.16f, rf = %.16f, rx=%.16f, ry = %.16f\n", i, j, deltaX, deltaY, distance, repulsiveForce, repulsiveForceX, repulsiveForceY);
-        */
         }
 
         repulsiveForces[i * 2] = repulsiveForceX;
         repulsiveForces[i * 2 + 1] = repulsiveForceY;
 
-        // Print final repulsive forces
-        //if (i == 2)
-            //printf("i = %d, repulsiveForceX = %.16f, repulsiveForceY = %.16f\n", i, repulsiveForces[i * 2], repulsiveForceY);
     }
 }
 
@@ -270,6 +263,8 @@ double* fruchterman_reingold_layout_cuda(
         //reset attractive and repulsive forces
         gpuErrchk(cudaMemset(d_attractiveForces, 0, numNodes * 2 * sizeof(double)));
         gpuErrchk(cudaMemset(d_repulsiveForces, 0, numNodes * 2 * sizeof(double)));
+
+        cout << "iteration: " << iter << endl;
 
     }
 

@@ -11,9 +11,14 @@ using namespace std;
 class Config {
 
 public:
+	string input_path;
+	string output_path;
+	int processor;
+	int iteration;
+
 	Config() {
-		input_path = "./graph_data.txt";
-		output_path = "./position_data/output.txt";
+		input_path = "./graph_data/large_grid.txt";
+		output_path = "./position_data/outputCuda.txt";
 		processor = 0;
 		iteration = 50;
 	}
@@ -21,35 +26,32 @@ public:
 
 	}
 	void ParseArgs(int argc, char** argv) {
-		int opt;
-		const char* str = "p:l:m:o:s:t:c:a:";
-		while ((opt = getopt(argc, argv, str)) != -1) {
-			switch (opt) {
-			case 'p':
-				processor = atoi(optarg);
-				break;
-			case 'i':
-				input_path = string(optarg);
-				break;
-			case 'o':
-				output_path = string(optarg);
-				break;
-			case 't':
-				iteration = atoi(optarg);
-				break;
-			default:
+		if(argc==1){
+			cout << "No arguments, continue with default values" << endl;
+			return;
+		}
+		for (int i = 1; i < argc; i++) {
+			if (string(argv[i]) == "-i") {
+				input_path = string(argv[i + 1]);
+				i++;
+			}
+			else if (string(argv[i]) == "-o") {
+				output_path = string(argv[i + 1]);
+				i++;
+			}
+			else if (string(argv[i]) == "-p") {
+				processor = atoi(argv[i + 1]);
+				i++;
+			}
+			else if (string(argv[i]) == "-t") {
+				iteration = atoi(argv[i + 1]);
+				i++;
+			}
+			else {
 				cout << "Invalid arguments" << endl;
 				exit(1);
 			}
 		}
-		
 	}
-
-private:
-	string input_path;
-	string output_path;
-	int processor;
-	int iteration;
-
 
 };
