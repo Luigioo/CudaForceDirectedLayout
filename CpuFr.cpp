@@ -116,6 +116,12 @@ double* CpuFr::fruchterman_reingold_layout_cpu(int* edges, int numEdges, int num
         // Compute attractive forces
         calculateAttractiveForces(edges, numEdges, pos, attractiveForces, k, numNodes);
 
+  //      double sumAttractiveForces = 0.0;
+  //      for(int i=0;i<numNodes*2;i++){
+		//	sumAttractiveForces += std::abs(attractiveForces[i]);
+		//}
+  //      std::cout << "Sum of Attractive Forces   : " << sumAttractiveForces << std::endl;
+
         applyForces(pos, attractiveForces, repulsiveForces, numNodes, temp);
 
 

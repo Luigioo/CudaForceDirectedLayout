@@ -7,6 +7,7 @@
 #include "CudaFr.cuh"
 #include "LoadData.h"
 #include "CpuFr.h"
+#include "Config.h"
 
 
 using namespace std;
@@ -20,12 +21,15 @@ bool areArraysEqual(const T arr1[], const T arr2[], int size) {
 	return true;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+
+	Config config(argc, argv);
+
 
 	int arrsize;
 	int numEdges;
 	int numNodes;
-	int* arr = LoadData::readFileAndConvertInt("./graph_data/random.txt", arrsize, numNodes);
+	int* arr = LoadData::readFileAndConvertInt("./graph_data/grid.txt", arrsize, numNodes);
 	numEdges = arrsize / 2;
 
 	if (arr != nullptr) {

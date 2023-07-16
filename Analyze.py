@@ -24,8 +24,6 @@ def ArrayToGraph(fileName):
 
     edge_edge_array = np.array(edge_edge_array[0])
 
-    print(num_nodes)
-
     # Check if the size of edge_edge_array is a multiple of 2
     if edge_edge_array.size % 2 != 0:
         raise ValueError("Size of edge_edge_array must be a multiple of 2")
@@ -43,9 +41,9 @@ def ArrayToGraph(fileName):
     G.add_edges_from(edge_array)
 
     # Print the number of nodes and the edges of the graph
-    print("Number of nodes:", num_nodes)
-    print("Edges:")
-    print(G.edges())
+    # print("Number of nodes:", num_nodes)
+    # print("Edges:")
+    # print(G.edges())
     return G
 
 
@@ -61,10 +59,26 @@ def group_elements(arr):
     return result
 
 def read_double_values(file_path):
-    with open(file_path, 'r') as file:
-    # Read all lines from the file, strip trailing whitespace, 
-    # convert to float, and add to a list
-        return [float(line.strip()) for line in file]
+    arr = []
+    try:
+        with open(file_path, 'r') as file:
+            for line in file:
+                try:
+                    value = float(line.strip())
+                    arr.append(value)
+                except ValueError:
+                    print(f"Invalid value found: {line.strip()}")
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+    except IOError:
+        print(f"Error reading file: {file_path}")
+
+    if len(arr) == 0:
+        print("No valid values found in the file.")
+
+    return arr
+
+        
 
 def calculate_edge_crossings(graph, pos):
     crossings = 0
@@ -122,30 +136,32 @@ def do_edges_cross(p1, p2, p3, p4):
 # fr_time = end_time_fr - start_time_fr
 # normal_pos = group_elements(normal_pos)
 
-arr = read_double_values("position_data/fr_CUDA.txt")
-cuda_pos = group_elements(arr)
-
-arr = read_double_values("position_data/fr_CPU.txt")
-normal_pos = group_elements(arr)
-
-G = ArrayToGraph('graph_data/random.txt')
-
-print(len(G.nodes()))
 
 
-if ENABLE_CROSSING_EDGES:
-    print("edge crossings (fr_cuda): " + str(calculate_edge_crossings(G, cuda_pos)))
+if __name__ == "__main__":
 
-if ENABLE_CROSSING_EDGES:
-    print("edge crossings (fr): " + str(calculate_edge_crossings(G, normal_pos)))
+    arr = read_double_values("position_data/fr_CUDA.txt")
+    cuda_pos = group_elements(arr)
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+    arr = read_double_values("position_data/fr_CPU.txt")
+    normal_pos = group_elements(arr)
 
-ax1.set_title('Graph 1 (fr_cuda)\nTime: {:.4f} seconds'.format(1.1))
-nx.draw(G, pos=cuda_pos, ax=ax1)
+    G = ArrayToGraph('graph_data/random.txt')
 
-ax2.set_title('Graph 2 (fr)\nTime: {:.4f} seconds'.format(1.1))
-nx.draw(G, pos=normal_pos, ax=ax2)
 
-plt.tight_layout()
-plt.show()
+    if ENABLE_CROSSING_EDGES:
+        print("edge crossings (fr_cuda): " + str(calculate_edge_crossings(G, cuda_pos)))
+
+    if ENABLE_CROSSING_EDGES:
+        print("edge crossings (fr): " + str(calculate_edge_crossings(G, normal_pos)))
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+
+    ax1.set_title('Graph 1 (fr_cuda)\nTime: {:.4f} seconds'.format(1.1))
+    nx.draw(G, pos=cuda_pos, ax=ax1)
+
+    ax2.set_title('Graph 2 (fr)\nTime: {:.4f} seconds'.format(1.1))
+    nx.draw(G, pos=normal_pos, ax=ax2)
+
+    plt.tight_layout()
+    plt.show()

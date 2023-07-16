@@ -13,6 +13,7 @@
 #include "device_launch_parameters.h"
 //thrust
 #include <thrust/device_ptr.h>
+#include <thrust/device_vector.h>
 #include <thrust/reduce.h>
 #include <thrust/transform_reduce.h>
 #include <thrust/functional.h>
@@ -34,6 +35,11 @@ inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort =
     }
 }
 
+struct AbsoluteValue {
+    __device__ double operator()(const double& x) const {
+        return fabs(x);
+    }
+};
 
 // CUDA kernel for calculating repulsive forces
 __global__ void calculateRepulsiveForces(const double* positions,
@@ -105,7 +111,7 @@ __global__ void calculateAttractiveForces(int* edges, int numEdges, const double
     double* attractiveForces, const double k,
     const int numNodes) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
-    return;
+    
     if (i < numEdges) {
         int node1 = edges[i * 2];
         int node2 = edges[i * 2 + 1];
@@ -204,8 +210,9 @@ double* fruchterman_reingold_layout_cuda(
     gpuErrchk(cudaMemset(d_attractiveForces, 0, numNodes * 2 * sizeof(double)));
 
     // CUDA grid and block dimensions
+    int threadNeeded = max(numEdges, numNodes);
     int blockSize = 256;
-    int gridSize = (numNodes + blockSize - 1) / blockSize;
+    int gridSize = (threadNeeded + blockSize - 1) / blockSize;
 
     for (int iter = 0; iter < iterations; ++iter) {
         // Compute repulsive forces
@@ -214,7 +221,7 @@ double* fruchterman_reingold_layout_cuda(
         gpuErrchk(cudaDeviceSynchronize());
         // Compute attractive forces
         //calculateAttractiveForces<<<gridSize,blockSize>>>(d_edges, numEdges, d_positions, d_attractiveForces, k, numNodes);
-        calculateAttractiveForcesReduce<<<gridSize, blockSize>>>(d_edges, numEdges, d_positions, d_attractiveForces, k, numNodes);
+        calculateAttractiveForces<<<gridSize, blockSize>>>(d_edges, numEdges, d_positions, d_attractiveForces, k, numNodes);
         gpuErrchk(cudaGetLastError());
         gpuErrchk(cudaDeviceSynchronize());
 
@@ -224,13 +231,18 @@ double* fruchterman_reingold_layout_cuda(
 
         temp *= cooling_factor;
 
+
+        //thrust::device_ptr<double> devicePtr = thrust::device_pointer_cast(d_attractiveForces);
+        //thrust::device_vector<double> deviceVec(devicePtr, devicePtr + numNodes*2);
+        //thrust::transform(deviceVec.begin(), deviceVec.end(), deviceVec.begin(), AbsoluteValue());
+        //double sumAttractiveForces = thrust::reduce(deviceVec.begin(), deviceVec.end());
+        //cout<<"sum of attrac: "<<sumAttractiveForces << endl;
+
         // Accumulate sum of absolute forces
         //double sumRepulsiveForces = 0.0;
         //double sumAttractiveForces = 0.0;
 
         //auto sumRepulsive = thrust::device_pointer_cast(d_repulsiveForces);
-        //auto sumAttractive = thrust::device_pointer_cast(d_attractiveForces);
-
         //std::cout << std::setprecision(std::numeric_limits<double>::digits10 + 1); // Set precision to maximum
         //cout << "repulsive: " << endl;
         //for (int i = 0; i < numNodes*2; i++) {
