@@ -148,9 +148,9 @@ __global__ void applyForces(double* positions,
             positions[i * 2] += displacementX;
             positions[i * 2 + 1] += displacementY;
 
-            // Ensure node stays within bounding box
-            positions[i * 2] = max(0.01, min(positions[i * 2], 1.0));
-            positions[i * 2 + 1] = max(0.01, min(positions[i * 2 + 1], 1.0));
+            //// Ensure node stays within bounding box
+            //positions[i * 2] = max(0.01, min(positions[i * 2], 1.0));
+            //positions[i * 2 + 1] = max(0.01, min(positions[i * 2 + 1], 1.0));
         }
 
 

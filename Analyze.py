@@ -109,6 +109,25 @@ def do_edges_cross(p1, p2, p3, p4):
         ((x3 - x4) * (y1 - y3) - (y3 - y4) * (x1 - x3)) * ((x3 - x4) * (y2 - y3) - (y3 - y4) * (x2 - x3)) < 0
     )
 
+def displayResults(G, cuda_pos, cuda_runtime, cpu_pos=None, cpu_runtime=None):
+    if cpu_pos is not None:
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7))
+
+        ax1.set_title(f'Graph 1 (fr_cuda)\nTime: {cuda_runtime:.4f} seconds')
+        nx.draw(G, pos=cuda_pos, ax=ax1, node_size=20)
+
+        ax2.set_title(f'Graph 2 (fr)\nTime: {cpu_runtime:.4f} seconds')
+        nx.draw(G, pos=cpu_pos, ax=ax2, node_size=20)
+
+        plt.tight_layout()
+    else:
+        fig, ax1 = plt.subplots(figsize=(7, 7))
+
+        ax1.set_title(f'Graph 1 (fr_cuda)\nTime: {cuda_runtime:.4f} seconds')
+        nx.draw(G, pos=cuda_pos, ax=ax1, node_size=20)
+
+    plt.show()
+
 # Example usage
 # G = nx.karate_club_graph()
 # numNodes = 50
@@ -143,17 +162,17 @@ if __name__ == "__main__":
     arr = read_double_values("position_data/outputCuda.txt")
     cuda_pos = group_elements(arr)
 
-    arr = read_double_values("position_data/fr_CPU.txt")
-    normal_pos = group_elements(arr)
+    # arr = read_double_values("position_data/fr_CPU.txt")
+    # normal_pos = group_elements(arr)
 
-    G = ArrayToGraph('graph_data/large_grid.txt')
+    G = ArrayToGraph('./graph_data/grid_nodes_100_input.txt')
 
 
     if ENABLE_CROSSING_EDGES:
         print("edge crossings (fr_cuda): " + str(calculate_edge_crossings(G, cuda_pos)))
 
-    if ENABLE_CROSSING_EDGES:
-        print("edge crossings (fr): " + str(calculate_edge_crossings(G, normal_pos)))
+    # if ENABLE_CROSSING_EDGES:
+    #     print("edge crossings (fr): " + str(calculate_edge_crossings(G, normal_pos)))
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
 

@@ -8,3 +8,6 @@
 /x64/Debug
 *.vcxproj
 *.user
+/__pycache__/Analyze.cpython-310.pyc
+/__pycache__/GenData.cpython-310.pyc
+*.pyc

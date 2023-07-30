@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # Generate the grid graph
     # G = nx.grid_2d_graph(math.isqrt(NUMNODES), math.isqrt(NUMNODES),)
     # GraphToArray(G, "graph_data/grid.txt")
-    genLargeGrid(2<<6)
+    genLargeGrid(1000)
     # G_dict = {node: list(G.neighbors(node)) for node in G.nodes()}
     # edge_edge_array = np.array(list(G.edges)).flatten()
     # serialize_array(edge_edge_array, "random_50.txt")

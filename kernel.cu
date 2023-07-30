@@ -72,7 +72,9 @@ int main(int argc, char* argv[]) {
 	}
 	else if (cfg.processor == 1) {
 		cout << "Running CPU algorithm" << endl;
+		recordTime();
 		double* cpuPos = CpuFr::fruchterman_reingold_layout_cpu(arr, numEdges, numNodes, cfg.iteration);
+		cout << "CPU took " << recordTime() << endl;
 		LoadData::writeFileWithPrecision(cfg.output_path, cpuPos, numNodes * 2);
 		delete[] cpuPos;
 	}

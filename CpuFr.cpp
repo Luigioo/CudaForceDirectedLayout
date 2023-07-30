@@ -80,9 +80,9 @@ void CpuFr::applyForces(double* positions, double* attractiveForces, double* rep
         positions[i * 2] += displacementX;
         positions[i * 2 + 1] += displacementY;
 
-        // Ensure node stays within bounding box
-        positions[i * 2] = std::max(0.01, std::min(positions[i * 2], 1.0));
-        positions[i * 2 + 1] = std::max(0.01, std::min(positions[i * 2 + 1], 1.0));
+        //// Ensure node stays within bounding box
+        //positions[i * 2] = std::max(0.01, std::min(positions[i * 2], 1.0));
+        //positions[i * 2 + 1] = std::max(0.01, std::min(positions[i * 2 + 1], 1.0));
     }
 }
 
