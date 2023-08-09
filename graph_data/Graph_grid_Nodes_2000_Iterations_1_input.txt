@@ -1,0 +1,32 @@
+Abstract
+Intro
+Background
+    Introduction to Graph Theory and Graph Drawing
+        Definition and Importance of Graphs
+        Graph Drawing Techniques: An Overview
+        Force-Directed Algorithms: An Introduction
+    Fruchterman-Reingold Algorithm: Concept and Principles
+		Concept and Principles
+		Usage and Importance in Graph Drawing
+	Computational Devices Overview
+		Introduction to CPU and GPU Architectures
+			i7-8750H: Architecture and Performance Characteristics
+			GTX 1070 Max-Q: Architecture and Performance Characteristics
+	Parallel Programming: Concepts and Importance
+        Overview of GPU Architectures
+        GPU Programming Models
+            CUDA/OpenCL: A Brief Introduction
+            Importance of Data Transfer and Memory Management in GPU Programming
+    Review of Existing Approaches
+        Force-Directed Algorithms: Traditional Implementations
+        Transition from CPU to GPU: Challenges and Opportunities
+        Existing GPU-based Force-Directed Algorithms
+        Comparative Analysis of Existing Methods
+            Performance Comparison
+            Efficiency and Limitations
+    
+
+
+Research Methodology
+Results Evaluation
+Conclusion

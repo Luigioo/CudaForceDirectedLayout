@@ -55,6 +55,19 @@ def generate_grid_graph(rows, columns):
     
     return G
 
+
+def generate_scale_free_graph(nodes, m):
+    G = nx.barabasi_albert_graph(nodes, m)
+    return G
+
+def scale_free_avg_degree(nodes, m):
+    return 2 * m * (nodes - m) / nodes
+
+def generate_small_world_graph(n, k, p):
+    G = nx.watts_strogatz_graph(n, k, p)
+    return G
+
+
 def genLargeGrid(sideLength):
     with open("graph_data/large_grid.txt", 'w') as f:  # Open the file in append mode
         for r in range(sideLength-1):

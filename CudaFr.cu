@@ -264,7 +264,7 @@ double* fruchterman_reingold_layout_cuda(
         gpuErrchk(cudaMemset(d_attractiveForces, 0, numNodes * 2 * sizeof(double)));
         gpuErrchk(cudaMemset(d_repulsiveForces, 0, numNodes * 2 * sizeof(double)));
 
-        cout << "iteration: " << iter << endl;
+        //cout << "iteration: " << iter << endl;
 
     }
 

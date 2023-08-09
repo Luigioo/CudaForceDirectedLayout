@@ -97,3 +97,8 @@ def simplified_spring_layout(G, iterations=50):
 
     # Return as a dictionary of node : position
     return {n: pos[i] for i, n in enumerate(G.nodes)}
+
+
+# E:/Ecode/GPU/VS/Code/CudaAlgo/CudaRuntime2/x64/Debug/CudaRuntime2.exe -i E:/Ecode/GPU/VS/Code/CudaAlgo/CudaRuntime2/graph_data/Graph_grid_Nodes_2000_Iterations_50_input.txt -o E:/Ecode/GPU/VS/Code/CudaAlgo/CudaRuntime2/position_data/Graph_grid_Nodes_2000_Iterations_50_cpu_output.txt -p 0 -t 50
+
+
